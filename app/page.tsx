@@ -70,6 +70,8 @@ export default function Home() {
     if (!focusedWords.includes(word)) {
       const newFocused = [...focusedWords, word];
       setFocusedWords(newFocused);
+      // Regenerate anagrams with new focused word
+      setTimeout(() => handleFind(), 0);
     }
   };
 
@@ -77,11 +79,32 @@ export default function Home() {
     if (!removedWords.includes(word)) {
       const newRemoved = [...removedWords, word];
       setRemovedWords(newRemoved);
+      // Regenerate anagrams with new removed word
+      setTimeout(() => handleFind(), 0);
     }
+  };
+
+  const handleDeleteFocusedWord = (word: string) => {
+    const newFocused = focusedWords.filter(w => w !== word);
+    setFocusedWords(newFocused);
+    // Regenerate anagrams after removing focused word
+    setTimeout(() => handleFind(), 0);
+  };
+
+  const handleDeleteRemovedWord = (word: string) => {
+    const newRemoved = removedWords.filter(w => w !== word);
+    setRemovedWords(newRemoved);
+    // Regenerate anagrams after removing from removed list
+    setTimeout(() => handleFind(), 0);
   };
 
   const handleCopy = (anagram: string[]) => {
     navigator.clipboard.writeText(anagram.join(' '));
+  };
+
+  const handleCopyAll = () => {
+    const allAnagrams = anagrams.map(anagram => anagram.join(' ')).join('\n');
+    navigator.clipboard.writeText(allAnagrams);
   };
 
   return (
@@ -161,11 +184,51 @@ export default function Home() {
           <div className="space-y-3">
             <div>
               <strong className="text-gray-700">Focused words:</strong>
-              <span className="ml-2 text-gray-900">{focusedWords.join(', ') || '(none)'}</span>
+              <div className="mt-2 flex gap-2 flex-wrap">
+                {focusedWords.length === 0 ? (
+                  <span className="text-gray-500">(none)</span>
+                ) : (
+                  focusedWords.map((word) => (
+                    <span
+                      key={word}
+                      className="inline-flex items-center gap-1 px-3 py-1 bg-blue-100 text-blue-800 rounded-full"
+                    >
+                      {word}
+                      <button
+                        onClick={() => handleDeleteFocusedWord(word)}
+                        className="ml-1 text-blue-600 hover:text-blue-900 font-bold"
+                        title="Remove from focused words"
+                      >
+                        ×
+                      </button>
+                    </span>
+                  ))
+                )}
+              </div>
             </div>
             <div>
               <strong className="text-gray-700">Removed words:</strong>
-              <span className="ml-2 text-gray-900">{removedWords.join(', ') || '(none)'}</span>
+              <div className="mt-2 flex gap-2 flex-wrap">
+                {removedWords.length === 0 ? (
+                  <span className="text-gray-500">(none)</span>
+                ) : (
+                  removedWords.map((word) => (
+                    <span
+                      key={word}
+                      className="inline-flex items-center gap-1 px-3 py-1 bg-red-100 text-red-800 rounded-full"
+                    >
+                      {word}
+                      <button
+                        onClick={() => handleDeleteRemovedWord(word)}
+                        className="ml-1 text-red-600 hover:text-red-900 font-bold"
+                        title="Remove from removed words"
+                      >
+                        ×
+                      </button>
+                    </span>
+                  ))
+                )}
+              </div>
             </div>
             <div className="flex gap-2">
               <input
@@ -193,6 +256,20 @@ export default function Home() {
         {error && (
           <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md mb-6">
             {error}
+          </div>
+        )}
+
+        {anagrams.length > 0 && (
+          <div className="flex justify-between items-center mb-4">
+            <div className="text-gray-700 font-medium">
+              Found {anagrams.length} anagram{anagrams.length !== 1 ? 's' : ''}
+            </div>
+            <button
+              onClick={handleCopyAll}
+              className="px-6 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors"
+            >
+              Copy All
+            </button>
           </div>
         )}
 

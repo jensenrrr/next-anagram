@@ -5,13 +5,19 @@ import path from 'path';
 interface DictionaryOptions {
   without: string[];
   topN?: number;
+  timeout?: number;
 }
 
 class Dictionary {
   private words: string[][];
+  private startTime: number = 0;
+  private timeout: number = 30000; // 30 seconds default
 
   constructor(options: DictionaryOptions) {
-    const { without, topN } = options;
+    const { without, topN, timeout } = options;
+    if (timeout) {
+      this.timeout = timeout;
+    }
     let dictpath = path.join(process.cwd(), 'words.txt');
 
     // If topN is specified, use the common words file instead
@@ -80,8 +86,13 @@ class Dictionary {
     }
 
     const results: string[][] = [];
+    this.startTime = Date.now();
     this.expand(withChars, remainingLetters, this.words, limit, results);
     return results;
+  }
+
+  private isTimeout(): boolean {
+    return Date.now() - this.startTime > this.timeout;
   }
 
   private expand(
@@ -92,6 +103,9 @@ class Dictionary {
     results: string[][]
   ): void {
     if (results.length >= limit) {
+      return;
+    }
+    if (this.isTimeout()) {
       return;
     }
     if (words.length === 0) {
@@ -170,7 +184,7 @@ export async function GET(request: NextRequest) {
   const maxResults = maxResultsParam ? parseInt(maxResultsParam, 10) : 200;
 
   try {
-    const dictionary = new Dictionary({ without: withoutWords, topN });
+    const dictionary = new Dictionary({ without: withoutWords, topN, timeout: 30000 });
     const results = dictionary.findAnagram(phrase, withWords, maxResults);
     
     return NextResponse.json(results);
